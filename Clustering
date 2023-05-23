@@ -1,0 +1,28 @@
+#clustering germination panel accessions by dissimilarity 
+#R. Upton
+
+library(tidyverse)
+
+#use "meanbydaygerm.csv"
+#needs to be a matrix
+CH<-read.csv(file.choose(), header=TRUE, row.names = 1)
+head(CH)
+str(CH)
+
+
+h_cluster <- hclust(dist(CH, method = "euclidean"))
+plot(h_cluster)
+
+clusters <- cutree(h_cluster, h = 18)
+clusters <- cutree(h_cluster, h = 15)
+
+CH_cl <- cbind(CH, as.data.frame(clusters))
+
+# Pivot data frame
+CH_cl %>% 
+  mutate(Accession=rownames(.)) %>% 
+  pivot_longer(cols = -c(clusters, Accession), names_to="Day", values_to="Germ") %>%
+  mutate(Day_num=gsub("Day_","",Day) %>% gsub("_Mean","",.) %>% as.numeric) %>% 
+  ggplot(aes(x=as.factor(Day_num),y=Germ, group=Accession)) +
+  geom_line() + geom_smooth(aes(group=clusters), method="loess") +
+  facet_wrap(~clusters) + theme_light()

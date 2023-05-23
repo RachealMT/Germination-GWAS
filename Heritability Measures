@@ -1,0 +1,75 @@
+#checking heritability for germination large accession traits
+#R. Upton
+
+#use file accessiongerminationheritability.csv
+
+library (car)
+
+CH<-read.csv(file.choose(), header=TRUE)
+head(CH)
+str(CH)
+
+
+Mod <- lm(Day.10~  Accession, data = CH)
+Anova(Mod)
+
+Mod <- lm(MILT ~  Accession, data = CH)
+Anova(Mod)
+
+Mod <- lm(Day.2~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.3~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.4~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.5~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.6~  Accession, data = CH)
+Anova(Mod)
+
+
+
+Mod <- lm(Day.7~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.8~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.9~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.11~  Accession, data = CH)
+Anova(Mod)
+
+
+
+Mod <- lm(Day.12~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.13~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(Day.14~  Accession, data = CH)
+Anova(Mod)
+
+
+
+Mod <- lm(FirstGerm~  Accession, data = CH)
+Anova(Mod)
+
+
+Mod <- lm(LastGerm~  Accession, data = CH)
+Anova(Mod)

@@ -1,0 +1,148 @@
+#R. Upton
+
+# Load custom environment
+renv::load("../../")
+
+# Packages
+library("tidyverse")
+
+#need to do use this code to install
+install.packages("devtools")
+devtools::install_github("jiabowang/GAPIT3",force=TRUE)
+
+# Load package
+library(GAPIT3)
+
+### Read genotypic data ###
+
+# IDs file
+ids_file <- readxl::read_xlsx("../../data/GWAS_Li-2021/IDs_from_seed size-camelina.xlsx")
+
+# Read genotypic data - VCF file
+vcf_panel_222 <- vcfR::read.vcfR("../../data/GWAS_Li-2021/222_samples_snp_flt.vcf.gz")
+
+# Change to numeric format - Genotypic data
+# - 0, 2 homozygous, 1 heterozygous 
+# original data is phases
+gd_file <- vcf_panel_222@gt %>% 
+  as.data.frame() %>% 
+  select(-FORMAT) %>% # Remove first colum - FORMAT
+  mutate_all(.funs = ~ (case_when(
+    . == "0|0" ~ 0,
+    . == "0|1" | . == "1|0" ~ 1,
+    . == "1|1" ~ 2
+  )))
+
+## Change column names
+id_df <- colnames(gd_file) %>% 
+  as.data.frame() %>% 
+  `colnames<-`(c("ID")) %>% 
+  left_join(., ids_file, by=c("ID"="JGI-SEQ-ID"))
+
+## Change GD name
+colnames(gd_file) <- id_df$`Lu code`
+
+# Genotypic Map
+gm_file <- vcf_panel_222@fix %>% 
+  as.data.frame() %>% 
+  select(ID, CHROM, POS)
+
+
+##use CamelinaAccessionMatrix1.csv
+#this is the file of the phenotypes
+
+cs_acc_seed <- CH<-read.csv(file.choose(), header=TRUE)
+head(CH)
+str(CH)
+
+# Keep GT of genotypes present in the phenotypic data
+gd_file_proc <- gd_file[,cs_acc_seed$Accession]
+gd_file_proc <- gd_file_proc %>% 
+  mutate(ID=gm_file$ID) %>% 
+  pivot_longer(cols = -ID, names_to = "Accession", values_to = "GT") %>% 
+  pivot_wider(id_cols = Accession, names_from = "ID", values_from = "GT")
+  
+
+#now we can start modeling, we are using FarmCPU
+#need to rerun with 4PCAs to match genotype
+#want to change from FDR correction to bonferroni 
+
+
+# Keep GT of genotypes present in the phenotypic data
+gd_file_proc <- gd_file[,cs_acc_seed$Accession]
+gd_file_proc <- gd_file_proc %>% 
+  mutate(ID=gm_file$ID) %>% 
+  pivot_longer(cols = -ID, names_to = "Accession", values_to = "GT") %>% 
+  pivot_wider(id_cols = Accession, names_from = "ID", values_from = "GT")
+
+#want to change from FDR correction to bonferroni 
+
+FCPU4B <- GAPIT(
+  Y=cs_acc_seed[c(1,2)],
+  GD=gd_file_proc,
+  GM=gm_file,
+  theRep=30,
+  model="FarmCPU",
+  PCA.total=4,
+  file.output=T
+)
+
+
+Run FarmCPU.P.Threshold function
+FarmCPU.P.Threshold(
+  Y=myY[,c(1,2)], #only two columns allowed, the first column is taxa name and the second is phenotype value
+  GD=myGD,
+  GM=myGM,
+  trait="trait_name", #name of the trait, only used for the output file name
+  theRep=30 #number of permutation times
+)
+
+
+
+myFarmCPU <- FarmCPU(
+  Y=myY[,c(1,2)],
+  GD=myGD,
+  GM=myGM,
+  p.threshold=0.05/nrow(myGM)
+)
+
+
+#we are going to try with using binary (1 or 0) for each trait yes or no
+##use CamelinaAccessionMatrixbinary.csv
+#this is the file of the phenotypes
+
+cs_acc_seed1 <-read.csv(file.choose(), header=TRUE)
+head(cs_acc_seed1)
+str(cs_acc_seed1)
+
+#need to rerun with 4PCAs to match genotype
+FCPUbinary <- GAPIT(
+  Y=cs_acc_seed1,
+  GD=gd_file_proc,
+  GM=gm_file,
+  model="FarmCPU",
+  PCA.total=2,
+  file.output=T
+)
+###########################################################################################
+#this last model is the one all other analyses are based on
+#we are going to try using all but the bottom 5 outlier accessions
+##use CamelinaAccessionMatrix1 outliersremoved.csv
+#this is the file of the phenotypes
+
+cs_acc_seed1 <-read.csv(file.choose(), header=TRUE)
+head(cs_acc_seed1)
+str(cs_acc_seed1)
+
+
+
+#need to rerun with 4PCAs to match genotype
+FCPUbinary <- GAPIT(
+  Y=cs_acc_seed1,
+  GD=gd_file_proc,
+  GM=gm_file,
+  model="FarmCPU",
+  PCA.total=2,
+  file.output=T
+)
+
